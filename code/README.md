@@ -20,6 +20,7 @@ libs: 项目Micropython库
     |---global_var.py：全局变量定义
 
 ui：UI主题库 
+
     |---default.py: 默认主题（图片素材位于“/data/picture/default”目录下）
 	
     |---dial.py：极简表盘）
