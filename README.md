@@ -7,7 +7,7 @@ Micropython是指使用python做各类嵌入式硬件设备编程。MicroPython�
 
 
 ## 硬件资源
-● 主控：ESP32-S3-WROOM-1 （N8R2; Flash:4MBytes,RAM:2MBytes）支持WiFi/BLE  
+● 主控：ESP32-C3（Flash:4MBytes）支持WiFi/BLE   
 ● 1 x 1.54寸显示屏（240x240）   
 ● 1 x 按键 
 ● 1 x LED (蓝灯)  
