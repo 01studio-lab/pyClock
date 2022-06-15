@@ -396,15 +396,24 @@ def startAP():
                             d.printStr('Connecting...', 10, 50, RED, size=2)
                             d.printStr(ret[0], 10, 110, WHITE, size=2)
                             
-                            ret_ip = handle_wifi_configure(ret[0], ret[1])
+                            #SSID带中文处理
+                            if '%' in ret[0]:
+                                print('wifi chinese')
+                                SSID = unquote(ret[0]).decode("gbk")
+                            else:
+                                SSID = ret[0]
+                            
+                            ret_ip = handle_wifi_configure(SSID, ret[1])
                             print(ret_ip)
                             if ret_ip is not None:
                                 
                                 #保存WiFi信息到wifi.txt,字典格式。
                                 wifi_info = {'SSID':'','PASSWORD':''}
-                                wifi_info['SSID'] = ret[0]
+
+                                wifi_info['SSID'] = SSID
                                 wifi_info['PASSWORD'] = ret[1]
                                 wifi_info['CITY'] = unquote(ret[2]).decode("gbk")
+                                print(wifi_info)
                                 
                                 f = open('wifi.txt', 'w') #以写的方式打开一个文件，没有该文件就自动新建
                                 f.write(json.dumps(wifi_info)) #写入数据
