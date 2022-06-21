@@ -158,30 +158,34 @@ def weather_display(city,weather):
         d.printStr(city[1],5, 5, WHITE, size=2)
         
     #空气质量
-    #优[0-50],良[50-100],轻度[100-150],中度[150-200],重度[200-300],严重[300-500]    
-    if 0 <= int(weather[4]) < 50: #优
-        d.drawRect(115, 5, 50, 24, GREEN, border=1,fillcolor=GREEN)
-        printChinese('优',129,5,color=BLACK,backcolor=GREEN,size=2)
+    #优[0-50],良[50-100],轻度[100-150],中度[150-200],重度[200-300],严重[300-500]
+    try:
+        if 0 <= int(weather[4]) < 50: #优
+            d.drawRect(115, 5, 50, 24, GREEN, border=1,fillcolor=GREEN)
+            printChinese('优',129,5,color=BLACK,backcolor=GREEN,size=2)
+            
+        elif 50 <= int(weather[4]) < 100:#良
+            d.drawRect(115, 5, 50,  24, LIANG, border=1,fillcolor=LIANG)
+            printChinese('良',129,5,color=BLACK,backcolor=LIANG,size=2)
+            
+        elif 100 <= int(weather[4]) < 150:#轻度
+            d.drawRect(115, 5, 50, 24, QINGDU, border=1,fillcolor=QINGDU)
+            printChinese('轻度',117,5,color=BLACK,backcolor=QINGDU,size=2)
+            
+        elif 150 <= int(weather[4]) < 200:#中度
+            d.drawRect(115, 5, 50,  24, ZHONGDU, border=1,fillcolor=ZHONGDU)
+            printChinese('中度',117,5,color=BLACK,backcolor=ZHONGDU,size=2)
+            
+        elif 200 <= int(weather[4]) < 300:#重度
+            d.drawRect(115, 5, 50,  24, ZHONGDU, border=1,fillcolor=ZHONGDU)
+            printChinese('重度',117,5,color=BLACK,backcolor=ZHONGDU,size=2)
+            
+        elif 300 <= int(weather[4]) < 500:#严重
+            d.drawRect(115, 5, 50,  24, YANZHONG, border=1,fillcolor=YANZHONG)
+            printChinese('严重',117,5,color=BLACK,backcolor=YANZHONG,size=2)
+    except:
+        print("No air quality data!")
         
-    if 50 <= int(weather[4]) < 100:#良
-        d.drawRect(115, 5, 50,  24, LIANG, border=1,fillcolor=LIANG)
-        printChinese('良',129,5,color=BLACK,backcolor=LIANG,size=2)
-        
-    if 100 <= int(weather[4]) < 150:#轻度
-        d.drawRect(115, 5, 50, 24, QINGDU, border=1,fillcolor=QINGDU)
-        printChinese('轻度',117,5,color=BLACK,backcolor=QINGDU,size=2)
-        
-    if 150 <= int(weather[4]) < 200:#中度
-        d.drawRect(115, 5, 50,  24, ZHONGDU, border=1,fillcolor=ZHONGDU)
-        printChinese('中度',117,5,color=BLACK,backcolor=ZHONGDU,size=2)
-        
-    if 200 <= int(weather[4]) < 300:#重度
-        d.drawRect(115, 5, 50,  24, ZHONGDU, border=1,fillcolor=ZHONGDU)
-        printChinese('重度',117,5,color=BLACK,backcolor=ZHONGDU,size=2)
-        
-    if 300 <= int(weather[4]) < 500:#严重
-        d.drawRect(115, 5, 50,  24, YANZHONG, border=1,fillcolor=YANZHONG)
-        printChinese('严重',117,5,color=BLACK,backcolor=YANZHONG,size=2)
 
     #实时温度
     d.Picture(10,175,"/data/picture/default/temp.jpg")
