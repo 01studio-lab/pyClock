@@ -127,10 +127,10 @@ def config_page():
       <h1>pyClock WiFi配网</h1>
       <form action="configure" method="post">
         <div>
-        <label>SSID</label> 
+        <label>WiFi账号</label> 
         <input type="text" name="ssid" /></div>
         <div>
-        <label>PASSWORD</label> 
+        <label>WiFi密码</label> 
         <input type="password" name="password" /></div>
         <div>
         <label>城市名 (例：深圳)</label> 
