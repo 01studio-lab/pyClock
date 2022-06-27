@@ -7,7 +7,7 @@
 
 #导入相关模块
 import network,time,re,json,os,machine
-from machine import Pin,RTC
+from machine import Pin,RTC,WDT
 from libs.urllib import urequest
 from libs import global_var,ap
 import gc,tftlcd,ntptime
@@ -39,7 +39,6 @@ DEEPGREEN = (1,179,105)
 [0]城市,[1]编码
 '''
 city=['','']
-#city=['深圳','101280601']
 
 '''
 天气信息:
@@ -117,7 +116,7 @@ def ntp_get():
         try:            
             ntptime.settime() #获取网络时间        
             print("ntp time(BeiJing): ",rtc.datetime())
-            return None
+            return True
 
         except:
             print("Can not get time!")
@@ -374,17 +373,21 @@ while 'wifi.txt' not in os.listdir():
         
     ap.startAP() #启动AP配网模式
 
+#启动看门狗，超时30秒。
+wdt = WDT(timeout=30000)
+
 #连接WiFi
 while not WIFI_Connect(): #等待wifi连接        
         
     pass
+
+wdt.feed() #喂狗
 
 #获取城市名称和编码
 d.fill(BLACK)
 d.printStr('Getting...', 10, 60, RED, size=3)
 d.printStr('City Data', 10, 120, WHITE, size=3)
 city_get()
-
 
 #同步网络时钟
 d.fill(BLACK)
@@ -422,6 +425,8 @@ while True:
         
         tick = datetime[6]
         
+        wdt.feed() #喂狗
+        
         if ui_choice == 0 :
             default.UI_Display(city,weather,datetime) #默认UI
             
@@ -430,7 +435,7 @@ while True:
         
         elif ui_choice == 2 :
             photo_album.UI_Display(datetime) #相册主图
-            
+                   
 #         print('gc2:',gc.mem_free()) #内存监测        
         
     time.sleep_ms(200) 
