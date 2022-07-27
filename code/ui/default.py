@@ -253,6 +253,9 @@ def message_display(weather,datetime):
         elif weather[3] == '阵雨':
             d.Picture(175,5,"/data/picture/default/weather/zhongyu.jpg")
             
+        elif weather[3] == '雾':
+            d.Picture(175,5,"/data/picture/default/weather/wu.jpg")
+            
         else:
             d.Picture(175,5,"/data/picture/default/weather/no.jpg")
 
