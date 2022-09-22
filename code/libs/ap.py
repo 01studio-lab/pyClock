@@ -399,11 +399,18 @@ def startAP():
                             else:
                                 SSID = ret[0]
                             
+                            #PASSWORD带中文和特殊字符处理
+                            if '%' in ret[1]:
+                                print('wifi chinese')
+                                PASSWORD = unquote(ret[1]).decode("gbk")
+                            else:
+                                PASSWORD = ret[1]
+                            
                             d.fill(BLACK)
                             d.printStr('Connecting...', 10, 50, RED, size=2)
                             d.printStr(SSID, 10, 110, WHITE, size=2)
                             
-                            ret_ip = handle_wifi_configure(SSID, ret[1])
+                            ret_ip = handle_wifi_configure(SSID,PASSWORD)
                             print(ret_ip)
                             if ret_ip is not None:
                                 
@@ -411,7 +418,7 @@ def startAP():
                                 wifi_info = {'SSID':'','PASSWORD':''}
 
                                 wifi_info['SSID'] = SSID
-                                wifi_info['PASSWORD'] = ret[1]
+                                wifi_info['PASSWORD'] = PASSWORD
                                 wifi_info['CITY'] = unquote(ret[2]).decode("gbk")
                                 print(wifi_info)
                                 
