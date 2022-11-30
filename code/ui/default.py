@@ -191,6 +191,7 @@ def weather_display(city,weather):
     d.Picture(10,175,"/data/picture/default/temp.jpg")
     d.drawRect(44, 185, 48, 10, WHITE, border=2,fillcolor=BLACK)
     d.drawRect(46, 187, 25, 6, RED, border=2,fillcolor=RED)
+    d.printStr('   ', 100, 177, BLACK, size=2) #消除重影
     d.printStr(weather[7], 115-len(weather[7]*5), 177, RED, size=2)
     printChinese('℃',135,177,color=WHITE,backcolor=BLACK,size=2)
     
@@ -198,8 +199,6 @@ def weather_display(city,weather):
     d.Picture(10,205,"/data/picture/default/humi.jpg")
     d.drawRect(44, 215, 48, 10, WHITE, border=2,fillcolor=BLACK)
     d.drawRect(46, 217, 30, 6, DEEPGREEN, border=2,fillcolor=DEEPGREEN)
-    d.printStr('100', 100, 207, DEEPGREEN, size=2)
-    time.sleep(1)
 
     if weather[8] == '100':
         d.printStr(weather[8], 100, 207, DEEPGREEN, size=2)
@@ -212,7 +211,7 @@ def message_display(weather,datetime):
     
     global message_num
     
-    #今天天气
+    #实时天气
     if message_num == 0:
         printChinese('       ',5,40,color=WHITE,backcolor=BLACK,size=2) #清除显示残留
         if len(weather[3])<3:#2个文字以内
@@ -255,6 +254,18 @@ def message_display(weather,datetime):
             
         elif weather[3] == '雾':
             d.Picture(175,5,"/data/picture/default/weather/wu.jpg")
+            
+        elif weather[3] == '雨夹雪':
+            d.Picture(175,5,"/data/picture/default/weather/yujiaxue.jpg")
+            
+        elif weather[3] == '小雪':
+            d.Picture(175,5,"/data/picture/default/weather/xiaoxue.jpg")
+
+        elif weather[3] == '中雪':
+            d.Picture(175,5,"/data/picture/default/weather/daxue.jpg")
+            
+        elif weather[3] == '大雪':
+            d.Picture(175,5,"/data/picture/default/weather/daxue.jpg")
             
         else:
             d.Picture(175,5,"/data/picture/default/weather/no.jpg")
