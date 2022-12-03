@@ -17,23 +17,25 @@ import requests
 # y: "2022"
 # 昨日确诊新增 yes_confirm_add: 1129
 # 昨日无症状新增 yes_wzz_add: 7166
-def getDailyEpidemicData(adCode: str = '440100'):
+def getDailyEpidemicData(adCode: str = '440100', limit: int = 30):
     url = "https://api.inews.qq.com/newsqa/v1/query/pubished/daily/list"
-    data = {'adCode': adCode, 'limit': '1'}
+    data = {'adCode': adCode, 'limit': limit}
     r = requests.get(url, params=data)  # 发get请求
-    print(r.json())  # 将返回的json串转为字典
+    print(len(r.text))
     info = json.loads(r.text)
     if info['ret'] == 0:
-        return info['data'][0]
+        return info['data']
     else:
         return None
 
 
 if __name__ == '__main__':
-    data = getDailyEpidemicData()
-    print(data)
+    data = getDailyEpidemicData(limit=40)
+    # data = None
     # 昨日确诊新增 yes_confirm_add: 1129
     # 昨日无症状新增 yes_wzz_add: 7166
-    print('昨日确诊新增', data['yes_confirm_add'])
-    print('昨日无症状新增', data['yes_wzz_add'])
-    print(len("2134"))
+    if data != None:
+        for i in range(len(data)):
+            print('日期', data[i]['date'], end=":")
+            print('昨日确诊新增', data[i]['yes_confirm_add'], end=" ")
+            print('昨日无症状新增', data[i]['yes_wzz_add'])

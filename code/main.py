@@ -19,12 +19,13 @@ from machine import Pin, RTC, WDT
 
 from libs import global_var, ap
 from libs.urllib import urequest
+from ui import daily_epidemic  # 30天疫情主题
 # 导入主题
 from ui import default  # 默认经典主题
 from ui import dial  # 极简表盘主题
 from ui import photo_album  # 相册主题
 
-ui_qty = 3  # UI总数量
+ui_qty = 4  # UI总数量
 ui_choice = 0  # 初始UI标志位
 
 ########################
@@ -233,6 +234,7 @@ def city_get():
         f.close()
 
         city[0] = info['CITY']
+        city[2] = getIdCardCode(city[0])
 
     # 获取城市名称
     f = open('/data/CityCode.txt', 'r')
@@ -381,8 +383,7 @@ def getDailyEpidemicData(adCode: str = '440100'):
 
 def epidemic_situation_get():
     global weather, city
-    city[2] = getIdCardCode("广州")
-    data = getDailyEpidemicData()
+    data = getDailyEpidemicData(city[2])
     weather[9] = str(data['yes_confirm_add'])
     weather[10] = str(data['yes_wzz_add'])
 
@@ -409,18 +410,20 @@ if __name__ == '__main__':
     d.printStr('Getting...', 10, 60, RED, size=3)
     d.printStr('City Data', 10, 120, WHITE, size=3)
     city_get()
-
+    wdt.feed()  # 喂狗
     # 同步网络时钟
     d.fill(BLACK)
     d.printStr('Getting...', 10, 60, RED, size=3)
     d.printStr('Date & Time', 10, 120, WHITE, size=3)
     ntp_get()
+    wdt.feed()  # 喂狗
 
     # 同步天气信息
     d.fill(BLACK)
     d.printStr('Getting...', 10, 60, RED, size=3)
     d.printStr('Weather Data', 10, 120, WHITE, size=3)
     weather_get(rtc.datetime())
+    wdt.feed()  # 喂狗
 
     # 获取疫情新增人数信息
     d.fill(BLACK)
@@ -428,7 +431,8 @@ if __name__ == '__main__':
     d.printStr('Epidemic Situation', 10, 120, WHITE, size=3)
     d.printStr('Data', 10, 180, WHITE, size=3)
     epidemic_situation_get()
-
+    wdt.feed()  # 喂狗
+    
     # 信息打印
     info_print()
 
@@ -454,12 +458,12 @@ if __name__ == '__main__':
             wdt.feed()  # 喂狗
 
             if ui_choice == 0:
-                default.UI_Display(city, weather, datetime)  # 默认UI
-
+                daily_epidemic.UI_Display(city, datetime)  # 30天疫情
             elif ui_choice == 1:
-                dial.UI_Display(datetime)  # 极简表盘
-
+                default.UI_Display(city, weather, datetime)  # 默认UI
             elif ui_choice == 2:
+                dial.UI_Display(datetime)  # 极简表盘
+            elif ui_choice == 3:
                 photo_album.UI_Display(datetime)  # 相册主图
 
         #         print('gc2:',gc.mem_free()) #内存监测
