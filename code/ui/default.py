@@ -7,9 +7,12 @@
 '''
 
 # 导入相关模块
-import time, gc, json
-from libs import global_var
+import gc
+import json
+import time
+
 from data.Fonts import fonts
+from libs import global_var
 
 # 动态信息显示
 message_num = 0
@@ -142,18 +145,14 @@ weather[9]:
 
 def weather_display(city, weather):
     try:
-
         # 城市信息,名称超出4个只显示前4个
         if len(city[0]) < 5:
             # printChinese(city[0],25-(len(city[0])-2)*10,5,color=WHITE,backcolor=BLACK,size=2)
             printCity(city[0], 25 - (len(city[0]) - 2) * 10, 5, color=WHITE, backcolor=BLACK, size=2)
-
         else:
             # printChinese(city[0][:4],5,5,color=WHITE,backcolor=BLACK,size=2)
             printCity(city[0][:4], 5, 5, color=WHITE, backcolor=BLACK, size=2)
-
     except:
-
         # 如果城市中文无法显示，那么就显示城市编码。
         d.printStr(city[1], 5, 5, WHITE, size=2)
 
@@ -190,7 +189,7 @@ def weather_display(city, weather):
     d.Picture(10, 175, "/data/picture/default/temp.jpg")
     d.drawRect(44, 185, 48, 10, WHITE, border=2, fillcolor=BLACK)
     d.drawRect(46, 187, 25, 6, RED, border=2, fillcolor=RED)
-    d.printStr('   ', 100, 177, BLACK, size=2) #消除重影
+    d.printStr('   ', 100, 177, BLACK, size=2)  # 消除重影
     d.printStr(weather[7], 115 - len(weather[7] * 5), 177, RED, size=2)
     printChinese('℃', 135, 177, color=WHITE, backcolor=BLACK, size=2)
 
@@ -198,6 +197,8 @@ def weather_display(city, weather):
     d.Picture(10, 205, "/data/picture/default/humi.jpg")
     d.drawRect(44, 215, 48, 10, WHITE, border=2, fillcolor=BLACK)
     d.drawRect(46, 217, 30, 6, DEEPGREEN, border=2, fillcolor=DEEPGREEN)
+    d.printStr('100', 100, 207, DEEPGREEN, size=2)
+    time.sleep(1)
 
     if weather[8] == '100':
         d.printStr(weather[8], 100, 207, DEEPGREEN, size=2)
@@ -206,11 +207,17 @@ def weather_display(city, weather):
         d.printStr(weather[8], 105, 207, DEEPGREEN, size=2)
     printChinese('％', 135, 207, color=WHITE, backcolor=BLACK, size=2)
 
+    # 新冠疫情感染人数新增
+    printChinese('确诊新增', 160, 176, color=WHITE, backcolor=BLACK, size=1)
+    d.printStr(weather[9], 160, 192, WHITE, size=1)
+    printChinese('无症状新增', 160, 208, color=WHITE, backcolor=BLACK, size=1)
+    d.printStr(weather[10], 160, 224, WHITE, size=1)
+
 
 def message_display(weather, datetime):
     global message_num
 
-    # 实时天气
+    # 今天天气
     if message_num == 0:
         printChinese('       ', 5, 40, color=WHITE, backcolor=BLACK, size=2)  # 清除显示残留
         if len(weather[3]) < 3:  # 2个文字以内
@@ -223,48 +230,35 @@ def message_display(weather, datetime):
                 d.Picture(175, 5, "/data/picture/default/weather/qing.jpg")
             else:
                 d.Picture(175, 5, "/data/picture/default/weather/qing_night.jpg")
-
         elif weather[3] == '阴':
             if 7 <= datetime[4] < 19:  # 白天7点~19点
                 d.Picture(175, 5, "/data/picture/default/weather/yin.jpg")
             else:
                 d.Picture(175, 5, "/data/picture/default/weather/yin_night.jpg")
-
         elif weather[3] == '多云':
             d.Picture(175, 5, "/data/picture/default/weather/duoyun.jpg")
-
         elif weather[3] == '小雨':
             d.Picture(175, 5, "/data/picture/default/weather/xiaoyu.jpg")
-
         elif weather[3] == '中雨':
             d.Picture(175, 5, "/data/picture/default/weather/zhongyu.jpg")
-
         elif weather[3] == '大雨':
             d.Picture(175, 5, "/data/picture/default/weather/dayu.jpg")
-
         elif weather[3] == '暴雨':
             d.Picture(175, 5, "/data/picture/default/weather/dayu.jpg")
-
         elif weather[3] == '雷阵雨':
             d.Picture(175, 5, "/data/picture/default/weather/dayu.jpg")
-
         elif weather[3] == '阵雨':
             d.Picture(175, 5, "/data/picture/default/weather/zhongyu.jpg")
-
         elif weather[3] == '雾':
             d.Picture(175, 5, "/data/picture/default/weather/wu.jpg")
-elif weather[3] == '雨夹雪':
-            d.Picture(175,5,"/data/picture/default/weather/yujiaxue.jpg")
-
+        elif weather[3] == '雨夹雪':
+            d.Picture(175, 5, "/data/picture/default/weather/yujiaxue.jpg")
         elif weather[3] == '小雪':
-            d.Picture(175,5,"/data/picture/default/weather/xiaoxue.jpg")
-
+            d.Picture(175, 5, "/data/picture/default/weather/xiaoxue.jpg")
         elif weather[3] == '中雪':
-            d.Picture(175,5,"/data/picture/default/weather/daxue.jpg")
-
+            d.Picture(175, 5, "/data/picture/default/weather/daxue.jpg")
         elif weather[3] == '大雪':
-            d.Picture(175,5,"/data/picture/default/weather/daxue.jpg")
-            
+            d.Picture(175, 5, "/data/picture/default/weather/daxue.jpg")
         else:
             d.Picture(175, 5, "/data/picture/default/weather/no.jpg")
 

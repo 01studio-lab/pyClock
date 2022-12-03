@@ -43,15 +43,15 @@ DEEPGREEN = (1, 179, 105)
 
 '''
 城市信息:
-[0]城市,[1]编码
+[0]城市，[1]天气编码，[2]身份证编码
 '''
-city = ['', '']
+city = ['', '', '']
 
 '''
 天气信息:
-[0]当日天气,[1]当日最高温,[2]当日最低温,[3]实时天气,[4]实时空气质量,[5]实时风向,[6]实时风力级数,[7]实时温度,[8]实时湿度,
+[0]当日天气,[1]当日最高温,[2]当日最低温,[3]实时天气,[4]实时空气质量,[5]实时风向,[6]实时风力级数,[7]实时温度,[8]实时湿度,[9]昨日确诊新增,[10]昨日无症状新增
 '''
-weather = [''] * 9  # 定义一个长度为9的字符列表
+weather = [''] * 11  # 定义一个长度为9的字符列表
 
 # 构建RTC时钟对象
 rtc = RTC()
@@ -70,35 +70,30 @@ def WIFI_Connect():
 
         print('Connecting to network...')
 
-        f = open('wifi.txt', 'r')  # 获取账号密码
-        info = json.loads(f.read())
-        f.close()
+        with open('wifi.txt', 'r') as f:  # 获取账号密码
+            info = json.loads(f.read())
+            print(info)
+            d.fill(BLACK)
+            d.printStr('Connecting...', 10, 50, RED, size=2)
+            d.printStr(info['SSID'], 10, 110, WHITE, size=2)
+            d.printStr('Press KEY 5s RESET!', 5, 180, BLUE, size=2)
+            wlan.connect(info['SSID'], info['PASSWORD'])  # 输入WIFI账号密码
 
-        print(info)
-        d.fill(BLACK)
-        d.printStr('Connecting...', 10, 50, RED, size=2)
-        d.printStr(info['SSID'], 10, 110, WHITE, size=2)
-        d.printStr('Press KEY 5s RESET!', 5, 180, BLUE, size=2)
-        wlan.connect(info['SSID'], info['PASSWORD'])  # 输入WIFI账号密码
+            while not wlan.isconnected():
 
-        while not wlan.isconnected():
-
-            # LED闪烁提示
-            WIFI_LED.value(1)
-            time.sleep_ms(300)
-            WIFI_LED.value(0)
-            time.sleep_ms(300)
-
-            # 超时判断,15秒没连接成功判定为超时
-            if time.time() - start_time > 15:
-                wlan.active(False)
-
-                # 点亮LED表示没连接上WiFi
+                # LED闪烁提示
                 WIFI_LED.value(1)
+                time.sleep_ms(300)
+                WIFI_LED.value(0)
+                time.sleep_ms(300)
 
-                print('WIFI Connected Timeout!')
-
-                return False
+                # 超时判断,15秒没连接成功判定为超时
+                if time.time() - start_time > 15:
+                    wlan.active(False)
+                    # 点亮LED表示没连接上WiFi
+                    WIFI_LED.value(1)
+                    print('WIFI Connected Timeout!')
+                    return False
 
     # 连接成功，熄灭LED
     WIFI_LED.value(0)
@@ -156,16 +151,11 @@ def weather_get(datetime):
             text2 = json.loads(re.search('var hour3data=' + '(.*?)' + '</script>', text).group(1))
 
             for i in range(len(text2['1d'])):
-
                 if int(text2['1d'][i].split(',')[0].split('日')[0]) == datetime[2]:  # 日期相同
-
                     if datetime[4] <= int(text2['1d'][i].split(',')[0].split('日')[1].split('时')[0]):  # 小时
-
                         if i == 0 or datetime[4] == int(text2['1d'][i].split(',')[0].split('日')[1].split('时')[0]):
-
                             weather[3] = text2['1d'][i].split(',')[2]  # 实时天气
                         else:
-
                             weather[3] = text2['1d'][i - 1].split(',')[2]  # 实时天气
                         break
 
@@ -227,7 +217,8 @@ def info_print():
     print('实时风力级数:', weather[6])
     print('实时温度:', weather[7])
     print('实时湿度:', weather[8])
-
+    print('昨日确诊新增:', weather[9])
+    print('昨日无症状新增:', weather[10])
     print('total:', total)
     print('lost:', lost)
 
@@ -360,6 +351,42 @@ def key(KEY):
 
 KEY.irq(key, Pin.IRQ_FALLING)  # 定义中断，下降沿触发
 
+
+def getIdCardCode(cityName: str):
+    city = None
+    with open('/data/IdCard.txt', 'r') as f:
+        while True:
+            text = f.readline()
+            if cityName in text:
+                city = re.match(r'"(.+?)"', text.split(':')[1]).group(1)  # "获取城市编码"
+                break
+            elif '}' in text:  # 结束，没这个城市。
+                print('No City Name!')
+                break
+    return city
+
+
+def getDailyEpidemicData(adCode: str = '440100'):
+    gc.collect()  # 内存回收
+    r = urequest.urlopen(
+        r"https://api.inews.qq.com/newsqa/v1/query/pubished/daily/list?limit=1&adCode=" + adCode)  # 发get请求
+    text = r.read(444).decode('utf-8')  # 抓取约前4W个字符，节省内存。
+    print(text)
+    info = json.loads(text)
+    if info['ret'] == 0:
+        return info['data'][0]
+    else:
+        return None
+
+
+def epidemic_situation_get():
+    global weather, city
+    city[2] = getIdCardCode("广州")
+    data = getDailyEpidemicData()
+    weather[9] = str(data['yes_confirm_add'])
+    weather[10] = str(data['yes_wzz_add'])
+
+
 ################
 #    主程序    #
 ################
@@ -395,6 +422,13 @@ if __name__ == '__main__':
     d.printStr('Weather Data', 10, 120, WHITE, size=3)
     weather_get(rtc.datetime())
 
+    # 获取疫情新增人数信息
+    d.fill(BLACK)
+    d.printStr('Getting...', 10, 60, RED, size=3)
+    d.printStr('Epidemic Situation', 10, 120, WHITE, size=3)
+    d.printStr('Data', 10, 180, WHITE, size=3)
+    epidemic_situation_get()
+
     # 信息打印
     info_print()
 
@@ -408,9 +442,8 @@ if __name__ == '__main__':
         # 30分钟在线获取一次天气信息,顺便检测wifi是否掉线
         if datetime[5] % 30 == 0 and datetime[6] == 0:
             WIFI_Connect()  # 检查WiFi，掉线的话自动重连
-
             weather_get(datetime)  # 获取天气信息
-
+            epidemic_situation_get()  # 获取疫情信息
             info_print()  # 打印相关信息
 
         # 每秒刷新一次UI
