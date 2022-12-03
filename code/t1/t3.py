@@ -36,3 +36,4 @@ if __name__ == '__main__':
     # 昨日无症状新增 yes_wzz_add: 7166
     print('昨日确诊新增', data['yes_confirm_add'])
     print('昨日无症状新增', data['yes_wzz_add'])
+    print(len("2134"))

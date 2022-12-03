@@ -209,8 +209,10 @@ def weather_display(city, weather):
 
     # 新冠疫情感染人数新增
     printChinese('确诊新增', 160, 176, color=WHITE, backcolor=BLACK, size=1)
+    d.printStr(" " * len(weather[9]), 160, 192, BLACK, size=1)  # 消除残影
     d.printStr(weather[9], 160, 192, WHITE, size=1)
     printChinese('无症状新增', 160, 208, color=WHITE, backcolor=BLACK, size=1)
+    d.printStr(" " * len(weather[9]), 160, 224, BLACK, size=1)  # 消除残影
     d.printStr(weather[10], 160, 224, WHITE, size=1)
 
 
