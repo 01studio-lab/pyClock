@@ -187,10 +187,10 @@ def weather_get(datetime):
                 if a and b and c:
                     return None
                 else:
-                    raise Exception("没结束")
+                    continue
 
             except Exception as e:
-                print(e)
+                print(type(e), ":", e)
                 print("Can not get weather!", i)
                 lost = lost + 1
                 gc.collect()  # 内存回收
