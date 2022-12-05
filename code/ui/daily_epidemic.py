@@ -7,8 +7,10 @@
 '''
 import gc
 import json
+import math
 
 from libs import global_var
+from libs.color import RED, BLACK, WHITE, getRandomColor
 from libs.tool import printChinese
 from libs.urllib import urequest
 
@@ -19,39 +21,55 @@ from libs.urllib import urequest
 ########################
 d = global_var.LCD
 
-# 定义常用颜色
-RED = (255, 0, 0)
-GREEN = (0, 255, 0)
-BLUE = (0, 0, 255)
-BLACK = (0, 0, 0)
-WHITE = (255, 255, 255)
-# 最多能显示的行数
-screenHeight = 240
-titleHeight = 24
-rowHeight = 16
+# 数据限制
 limit = 30
-rowCount = (screenHeight - titleHeight) / rowHeight
 
 
-def getRowOffset(second: int):
-    global limit
-    row_offset_start = int(second / 44 * rowCount)
-    row_offset_end = limit if row_offset_start + 13 > limit else row_offset_start + 13
-    return row_offset_start, row_offset_end
+class HeightCalculator():
+    def __init__(self):
+        global limit
+        # 屏幕高度
+        self.screenHeight = 240
+        # 标题高度
+        self.titleHeight = 16
+        # 每行数据高度
+        self.rowHeight = 16
+        # 一屏幕能显示数据的行数
+        self.rowCount = math.floor((self.screenHeight - self.titleHeight) / self.rowHeight)
+        # 多少秒触发一次数据移动
+        self.triggerSecond = 5
+        # 一分钟内数据能移动的次数
+        self.numberOfMoves = math.floor(60 / self.triggerSecond)
+        # 数据条数
+        self.numberOfData = limit
+        # 移动距离
+        self.movingDistance = math.ceil((self.numberOfData - self.rowCount) / self.numberOfMoves)
+        # 移动速度
+        self.movingSpeed = self.movingDistance / self.triggerSecond
+
+    def getRowOffset(self, second: int):
+        offset = math.floor(second * self.movingSpeed)
+        if offset - 1 < 0:
+            offset = 0
+        if offset > self.numberOfData:
+            offset = self.numberOfData - 1
+        row_offset_start = offset
+        row_offset_end = None if row_offset_start + self.rowCount > self.numberOfData else row_offset_start + self.rowCount
+        return row_offset_start, row_offset_end
+
+    def getHeight(self, row: int = 0):
+        fixedHeight = self.titleHeight + self.rowHeight * row
+        return fixedHeight
 
 
 data = []
 
 
-def getHeight(head: int = 24, row: int = 0, rowHeight: int = 16):
-    fixedHeight = head + rowHeight * row
-    return fixedHeight
-
-
 def getDailyEpidemicData(adCode: str = '440100', limit: int = 30):
     gc.collect()
     r = urequest.urlopen(
-        r"https://api.inews.qq.com/newsqa/v1/query/pubished/daily/list?limit=" + str(limit) + "&adCode=" + adCode)  # 发get请求
+        r"https://api.inews.qq.com/newsqa/v1/query/pubished/daily/list?limit=" + str(
+            limit) + "&adCode=" + adCode)  # 发get请求
     text = r.read(7000).decode('utf-8')  # 抓取约前4W个字符，节省内存。
     info = json.loads(text)
     if info['ret'] == 0:
@@ -66,28 +84,28 @@ second2 = 61
 
 def message_display(second):
     global data
+    heightCalculator = HeightCalculator()
     if data != None:
-        row_offset_start, row_offset_end = getRowOffset(second)
+        d.fill(BLACK)  # 清屏
+        printTitle()
+        row_offset_start, row_offset_end = heightCalculator.getRowOffset(second)
         for i, item in enumerate(data[row_offset_start:row_offset_end]):
-            height = getHeight(row=i)
+            height = heightCalculator.getHeight(row=i)
             d.printStr(item['date'], 0, height, WHITE, size=1)
             d.printStr(str(item['yes_confirm_add']), 72, height, RED, size=1)
             d.printStr(str(item['yes_wzz_add']), 144, height, RED, size=1)
 
 
 def printTitle():
-    d.fill(BLACK)  # 清屏
-    printChinese('日   ', 0, 0, color=WHITE, backcolor=BLACK, size=2)
-    printChinese('确诊 ', 72, 0, color=WHITE, backcolor=BLACK, size=2)
-    printChinese('无症状', 144, 0, color=WHITE, backcolor=BLACK, size=2)
+    printChinese('日期', 0, 0, color=getRandomColor(), backcolor=BLACK, size=1)
+    printChinese('确诊', 72, 0, color=getRandomColor(), backcolor=BLACK, size=1)
+    printChinese('无症状', 144, 0, color=getRandomColor(), backcolor=BLACK, size=1)
 
 
-def UI_Display(city, datetime):
+def UI_Display(city, weather, datetime):
     global second2, data, limit
     if global_var.UI_Change:  # 首次画表盘
         global_var.UI_Change = 0
-        d.fill(BLACK)  # 清屏
-        printTitle()
         data = getDailyEpidemicData(city[2], limit)
         message_display(datetime[6])
 
@@ -102,5 +120,8 @@ def UI_Display(city, datetime):
 
     # 疫情刷新时间30分钟
     if datetime[5] % 30 == 0 and datetime[6] == 0:
-        printTitle()
         data = getDailyEpidemicData(city[2], limit)
+        # 更新最新的疫情信息
+        if data is not None and data[-1] is not None:
+            weather[9] = str(data[-1]['yes_confirm_add'])
+            weather[10] = str(data[-1]['yes_wzz_add'])

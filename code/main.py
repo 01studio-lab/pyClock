@@ -15,7 +15,7 @@ import time
 import machine
 import network
 import ntptime
-from machine import Pin, RTC, WDT
+from machine import Pin, RTC
 
 from libs import global_var, ap
 from libs.urllib import urequest
@@ -60,6 +60,9 @@ rtc = RTC()
 # 初始化WIFI指示灯
 WIFI_LED = Pin(2, Pin.OUT)
 
+# 启动看门狗，超时30秒。
+# wdt = WDT(timeout=30000)
+wdt = None
 
 # WIFI连接函数
 def WIFI_Connect():
@@ -388,6 +391,12 @@ def epidemic_situation_get():
     weather[10] = str(data['yes_wzz_add'])
 
 
+def feedDog():
+    global wdt
+    if wdt is not None:
+        wdt.feed()  # 喂狗
+
+
 ################
 #    主程序    #
 ################
@@ -396,34 +405,31 @@ if __name__ == '__main__':
     while 'wifi.txt' not in os.listdir():
         ap.startAP()  # 启动AP配网模式
 
-    # 启动看门狗，超时30秒。
-    wdt = WDT(timeout=30000)
-
     # 连接WiFi
     while not WIFI_Connect():  # 等待wifi连接
         pass
 
-    wdt.feed()  # 喂狗
+    feedDog()  # 喂狗
 
     # 获取城市名称和编码
     d.fill(BLACK)
     d.printStr('Getting...', 10, 60, RED, size=3)
     d.printStr('City Data', 10, 120, WHITE, size=3)
     city_get()
-    wdt.feed()  # 喂狗
+    feedDog()  # 喂狗
     # 同步网络时钟
     d.fill(BLACK)
     d.printStr('Getting...', 10, 60, RED, size=3)
     d.printStr('Date & Time', 10, 120, WHITE, size=3)
     ntp_get()
-    wdt.feed()  # 喂狗
+    feedDog()  # 喂狗
 
     # 同步天气信息
     d.fill(BLACK)
     d.printStr('Getting...', 10, 60, RED, size=3)
     d.printStr('Weather Data', 10, 120, WHITE, size=3)
     weather_get(rtc.datetime())
-    wdt.feed()  # 喂狗
+    feedDog()  # 喂狗
 
     # 获取疫情新增人数信息
     d.fill(BLACK)
@@ -431,15 +437,13 @@ if __name__ == '__main__':
     d.printStr('Epidemic Situation', 10, 120, WHITE, size=3)
     d.printStr('Data', 10, 180, WHITE, size=3)
     epidemic_situation_get()
-    wdt.feed()  # 喂狗
-    
+    feedDog()  # 喂狗
+
     # 信息打印
     info_print()
 
     tick = 61  # 每秒刷新标志位
-
     while True:
-
         # 获取时间
         datetime = rtc.datetime()
 
@@ -452,13 +456,10 @@ if __name__ == '__main__':
 
         # 每秒刷新一次UI
         if tick != datetime[6]:
-
             tick = datetime[6]
-
-            wdt.feed()  # 喂狗
-
+            feedDog()  # 喂狗
             if ui_choice == 0:
-                daily_epidemic.UI_Display(city, datetime)  # 30天疫情
+                daily_epidemic.UI_Display(city, weather, datetime)  # 30天疫情
             elif ui_choice == 1:
                 default.UI_Display(city, weather, datetime)  # 默认UI
             elif ui_choice == 2:

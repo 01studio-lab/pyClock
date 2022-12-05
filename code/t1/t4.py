@@ -1,4 +1,5 @@
 import json
+import math
 
 import requests
 
@@ -17,9 +18,6 @@ import requests
 # y: "2022"
 # 昨日确诊新增 yes_confirm_add: 1129
 # 昨日无症状新增 yes_wzz_add: 7166
-def getHeight(head: int = 24, row: int = 0, rowHeight: int = 16):
-    fixedHeight = head + rowHeight * row
-    return fixedHeight
 
 
 def getDailyEpidemicData(adCode: str = '440100'):
@@ -35,29 +33,61 @@ def getDailyEpidemicData(adCode: str = '440100'):
         return None
 
 
-# 最多能显示的行数
-screenHeight = 240
-titleHeight = 24
-rowHeight = 16
-rowCount = (screenHeight - titleHeight) / rowHeight
+class HeightCalculator():
+    def __init__(self):
+        # 屏幕高度
+        self.screenHeight = 240
+        # 标题高度
+        self.titleHeight = 24
+        # 每行数据高度
+        self.rowHeight = 16
+        # 一屏幕能显示数据的行数
+        self.rowCount = math.floor((self.screenHeight - self.titleHeight) / self.rowHeight)
+        # 多少秒触发一次数据移动
+        self.triggerSecond = 5
+        # 一分钟内数据能移动的次数
+        self.numberOfMoves = math.floor(60 / self.triggerSecond)
+        # 数据条数
+        self.numberOfData = 30
+        # 移动距离
+        self.movingDistance = math.ceil((self.numberOfData - self.rowCount) / self.numberOfMoves)
+        # 移动速度
+        self.movingSpeed = self.movingDistance / self.triggerSecond
 
+    def getRowOffset(self, second: int):
+        offset = math.floor(second * self.movingSpeed)
+        if offset - 1 < 0:
+            offset = 0
+        if offset > self.numberOfData:
+            offset = self.numberOfData - 1
+        row_offset_start = offset
+        row_offset_end = None if row_offset_start + self.rowCount > self.numberOfData else row_offset_start + self.rowCount
+        return row_offset_start, row_offset_end
 
-def getRowOffset(second: int):
-    row_offset_start = int(second / 44 * rowCount)
-    row_offset_end = -1 if row_offset_start + 13 > 30 else row_offset_start + 13
-    return row_offset_start, row_offset_end
+    def getHeight(self, row: int = 0):
+        fixedHeight = self.titleHeight + self.rowHeight * row
+        return fixedHeight
 
 
 if __name__ == '__main__':
+    heightCalculator = HeightCalculator()
+    # data2 = [i for i in range(heightCalculator.numberOfData)]
+    # for i in range(60):
+    #     row_offset_start, row_offset_end = heightCalculator.getRowOffset(i)
+    #     if data2 != None:
+    #         print("*" * 60, "起点=", str(row_offset_start), "终点=", str(row_offset_end))
+    #         print(data2[row_offset_start:row_offset_end])
+    #         for item in data2[row_offset_start:row_offset_end]:
+    #             print(item)
 
     data = getDailyEpidemicData()
     for i in range(60):
         second = i
-        row_offset_start, row_offset_end = getRowOffset(i)
-        print("data" * 60)
+        row_offset_start, row_offset_end = heightCalculator.getRowOffset(i)
+        print("*" * 60)
         if data != None:
             for i, item in enumerate(data[row_offset_start:row_offset_end]):
-                print(i, getHeight(row=i))
+                # print(i, heightCalculator.getHeight(row=i))
                 print('日期', item['date'], end=":")
                 print('昨日确诊新增', item['yes_confirm_add'], end=" ")
                 print('昨日无症状新增', item['yes_wzz_add'])
