@@ -15,7 +15,7 @@ import time
 import machine
 import network
 import ntptime
-from machine import Pin, RTC
+from machine import Pin, RTC, WDT
 
 from libs import global_var, ap, color
 from libs.urllib import urequest
@@ -52,8 +52,8 @@ rtc = RTC()
 WIFI_LED = Pin(2, Pin.OUT)
 
 # 启动看门狗，超时30秒。
-# wdt = WDT(timeout=30000)
-wdt = None
+wdt = WDT(timeout=30000)
+# wdt = None
 
 
 # WIFI连接函数
