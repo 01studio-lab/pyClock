@@ -129,70 +129,71 @@ lost = 0
 # 网页获取天气数据
 def weather_get(datetime):
     global weather, lost, total, city
-    a = False
-    b = False
-    c = False
-    myURL = urequest.urlopen("http://www.weather.com.cn/weather1d/" + city[1] + ".shtml")
-    gc.collect()  # 内存回收
-    for i in range(30):  # 失败会重试，最多5
-        try:
-            print(int(gc.mem_free() / 8))
-            text = myURL.read(7500).decode('utf-8')  # 抓取约前4W个字符，节省内存。
+    for tryCount in range(5):  # 失败会重试，最多5
+        a = False
+        b = False
+        c = False
+        myURL = urequest.urlopen("http://www.weather.com.cn/weather1d/" + city[1] + ".shtml")
+        gc.collect()  # 内存回收
+        for i in range(30):  # 假设有30段数据
+            try:
+                text = myURL.read(7500).decode('utf-8')  # 抓取约前4W个字符，节省内存。
 
-            # 获取当日天气、高低温
-            info1 = re.search('id="hidden_title" value="(.*?)°C', text)
-            if info1 != None:
-                print("获取当日天气、高低温" + info1.group(0))
-                text1 = info1.group(1)
-                if weather[0] == '':
-                    weather[0] = text1.split()[2]  # 当日天气
-                if weather[1] == '':
-                    weather[1] = str(min(list(map(int, text1.split()[3].split('/')))))  # 当天最低温
-                if weather[2] == '':
-                    weather[2] = str(max(list(map(int, text1.split()[3].split('/')))))  # 当天最高温
-                a = True
-            # 获取实时天气
-            info2 = re.search('var hour3data=(.*?)\n', text)
-            if info2 != None:
+                # 获取当日天气、高低温
+                info1 = re.search('id="hidden_title" value="(.*?)°C', text)
+                if info1 != None:
+                    print("获取当日天气、高低温" + info1.group(0))
+                    text1 = info1.group(1)
+                    if weather[0] == '':
+                        weather[0] = text1.split()[2]  # 当日天气
+                    if weather[1] == '':
+                        weather[1] = str(min(list(map(int, text1.split()[3].split('/')))))  # 当天最低温
+                    if weather[2] == '':
+                        weather[2] = str(max(list(map(int, text1.split()[3].split('/')))))  # 当天最高温
+                    a = True
+                # 获取实时天气
+                info2 = re.search('var hour3data=(.*?)\n', text)
+                if info2 != None:
+                    gc.collect()  # 内存回收
+                    print("获取实时天气" + info2.group(0))
+                    text2 = json.loads(info2.group(1))
+                    for i in range(len(text2['1d'])):
+                        if int(text2['1d'][i].split(',')[0].split('日')[0]) == datetime[2]:  # 日期相同
+                            if datetime[4] <= int(text2['1d'][i].split(',')[0].split('日')[1].split('时')[0]):  # 小时
+                                if i == 0 or datetime[4] == int(
+                                        text2['1d'][i].split(',')[0].split('日')[1].split('时')[0]):
+                                    weather[3] = text2['1d'][i].split(',')[2]  # 实时天气
+                                else:
+                                    weather[3] = text2['1d'][i - 1].split(',')[2]  # 实时天气
+                                break
+                    b = True
+
+                # 获取实时空气质量、风向风力、温湿度
+                info3 = re.search('var observe24h_data = (.*?);', text)
+                if info3 != None:
+                    gc.collect()  # 内存回收
+                    print("获取实时空气质量、风向风力、温湿度" + info3.group(0))
+                    text3 = json.loads(info3.group(1))
+                    od_data = text3['od']['od2']
+                    for i in range(len(od_data)):
+                        weather[4] = od_data[i]['od28']  # 空气质量
+                        weather[5] = od_data[i]['od24']  # 实时风向
+                        weather[6] = od_data[i]['od25']  # 实时风力级数
+                        weather[8] = od_data[i]['od27']  # 相对湿度
+                        weather[7] = od_data[i]['od22']  # 温度
+                    c = True
+
+                total = total + 1
+                if a and b and c:
+                    return None
+                else:
+                    raise Exception("没结束")
+
+            except Exception as e:
+                print(e)
+                print("Can not get weather!", i)
+                lost = lost + 1
                 gc.collect()  # 内存回收
-                print("获取实时天气" + info2.group(0))
-                text2 = json.loads(info2.group(1))
-                for i in range(len(text2['1d'])):
-                    if int(text2['1d'][i].split(',')[0].split('日')[0]) == datetime[2]:  # 日期相同
-                        if datetime[4] <= int(text2['1d'][i].split(',')[0].split('日')[1].split('时')[0]):  # 小时
-                            if i == 0 or datetime[4] == int(text2['1d'][i].split(',')[0].split('日')[1].split('时')[0]):
-                                weather[3] = text2['1d'][i].split(',')[2]  # 实时天气
-                            else:
-                                weather[3] = text2['1d'][i - 1].split(',')[2]  # 实时天气
-                            break
-                b = True
-
-            # 获取实时空气质量、风向风力、温湿度
-            info3 = re.search('var observe24h_data = (.*?);', text)
-            if info3 != None:
-                gc.collect()  # 内存回收
-                print("获取实时空气质量、风向风力、温湿度" + info3.group(0))
-                text3 = json.loads(info3.group(1))
-                od_data = text3['od']['od2']
-                for i in range(len(od_data)):
-                    weather[4] = od_data[i]['od28']  # 空气质量
-                    weather[5] = od_data[i]['od24']  # 实时风向
-                    weather[6] = od_data[i]['od25']  # 实时风力级数
-                    weather[8] = od_data[i]['od27']  # 相对湿度
-                    weather[7] = od_data[i]['od22']  # 温度
-                c = True
-
-            total = total + 1
-            if a and b and c:
-                return None
-            else:
-                raise Exception("没结束")
-
-        except Exception as e:
-            print(e)
-            print("Can not get weather!", i)
-            lost = lost + 1
-            gc.collect()  # 内存回收
 
         time.sleep_ms(1000)
 
