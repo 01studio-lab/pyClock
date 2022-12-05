@@ -22,8 +22,7 @@ from libs.urllib import urequest
 d = global_var.LCD
 
 # 数据限制
-limit = 30
-
+limit = 15
 
 class HeightCalculator():
     def __init__(self):
@@ -73,6 +72,7 @@ def getDailyEpidemicData(adCode: str = '440100', limit: int = 30):
     text = r.read(7000).decode('utf-8')  # 抓取约前4W个字符，节省内存。
     info = json.loads(text)
     if info['ret'] == 0:
+        gc.collect()
         return info['data']
     else:
         return None
@@ -80,11 +80,11 @@ def getDailyEpidemicData(adCode: str = '440100', limit: int = 30):
 
 # 用于显示动画
 second2 = 61
+heightCalculator = HeightCalculator()
 
 
 def message_display(second):
-    global data
-    heightCalculator = HeightCalculator()
+    global data, heightCalculator
     if data != None:
         d.fill(BLACK)  # 清屏
         printTitle()

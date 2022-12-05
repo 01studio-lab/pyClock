@@ -17,7 +17,7 @@ import network
 import ntptime
 from machine import Pin, RTC
 
-from libs import global_var, ap ,color
+from libs import global_var, ap, color
 from libs.urllib import urequest
 from ui import daily_epidemic  # 30天疫情主题
 # 导入主题
@@ -54,6 +54,7 @@ WIFI_LED = Pin(2, Pin.OUT)
 # 启动看门狗，超时30秒。
 # wdt = WDT(timeout=30000)
 wdt = None
+
 
 # WIFI连接函数
 def WIFI_Connect():
@@ -128,66 +129,67 @@ lost = 0
 # 网页获取天气数据
 def weather_get(datetime):
     global weather, lost, total, city
-
-    for i in range(5):  # 失败会重试，最多5次
-
+    a = False
+    b = False
+    c = False
+    myURL = urequest.urlopen("http://www.weather.com.cn/weather1d/" + city[1] + ".shtml")
+    gc.collect()  # 内存回收
+    for i in range(30):  # 失败会重试，最多5
         try:
-
-            myURL = urequest.urlopen("http://www.weather.com.cn/weather1d/" + city[1] + ".shtml")
-            text = myURL.read(39000 + 100 * i).decode('utf-8')  # 抓取约前4W个字符，节省内存。
+            print(int(gc.mem_free() / 8))
+            text = myURL.read(7500).decode('utf-8')  # 抓取约前4W个字符，节省内存。
 
             # 获取当日天气、高低温
-            text1 = re.search('id="hidden_title" value="' + '(.*?)' + '°C', text).group(1)
-            weather[0] = text1.split()[2]  # 当日天气
-            weather[1] = str(min(list(map(int, text1.split()[3].split('/')))))  # 当天最低温
-            weather[2] = str(max(list(map(int, text1.split()[3].split('/')))))  # 当天最高温
-
+            info1 = re.search('id="hidden_title" value="(.*?)°C', text)
+            if info1 != None:
+                print("获取当日天气、高低温" + info1.group(0))
+                text1 = info1.group(1)
+                if weather[0] == '':
+                    weather[0] = text1.split()[2]  # 当日天气
+                if weather[1] == '':
+                    weather[1] = str(min(list(map(int, text1.split()[3].split('/')))))  # 当天最低温
+                if weather[2] == '':
+                    weather[2] = str(max(list(map(int, text1.split()[3].split('/')))))  # 当天最高温
+                a = True
             # 获取实时天气
-            text2 = json.loads(re.search('var hour3data=' + '(.*?)' + '</script>', text).group(1))
-
-            for i in range(len(text2['1d'])):
-                if int(text2['1d'][i].split(',')[0].split('日')[0]) == datetime[2]:  # 日期相同
-                    if datetime[4] <= int(text2['1d'][i].split(',')[0].split('日')[1].split('时')[0]):  # 小时
-                        if i == 0 or datetime[4] == int(text2['1d'][i].split(',')[0].split('日')[1].split('时')[0]):
-                            weather[3] = text2['1d'][i].split(',')[2]  # 实时天气
-                        else:
-                            weather[3] = text2['1d'][i - 1].split(',')[2]  # 实时天气
-                        break
+            info2 = re.search('var hour3data=(.*?)\n', text)
+            if info2 != None:
+                gc.collect()  # 内存回收
+                print("获取实时天气" + info2.group(0))
+                text2 = json.loads(info2.group(1))
+                for i in range(len(text2['1d'])):
+                    if int(text2['1d'][i].split(',')[0].split('日')[0]) == datetime[2]:  # 日期相同
+                        if datetime[4] <= int(text2['1d'][i].split(',')[0].split('日')[1].split('时')[0]):  # 小时
+                            if i == 0 or datetime[4] == int(text2['1d'][i].split(',')[0].split('日')[1].split('时')[0]):
+                                weather[3] = text2['1d'][i].split(',')[2]  # 实时天气
+                            else:
+                                weather[3] = text2['1d'][i - 1].split(',')[2]  # 实时天气
+                            break
+                b = True
 
             # 获取实时空气质量、风向风力、温湿度
-            text3 = json.loads(re.search('var observe24h_data = ' + '(.*?)' + ';', text).group(1))
-
-            for i in range(len(text3['od']['od2'])):
-                weather[4] = text3['od']['od2'][i]['od28']  # 空气质量
-                if weather[4] != '':
-                    break
-
-            for i in range(len(text3['od']['od2'])):
-                weather[5] = text3['od']['od2'][i]['od24']  # 实时风向
-                if weather[5] != '':
-                    break
-
-            for i in range(len(text3['od']['od2'])):
-                weather[6] = text3['od']['od2'][i]['od25']  # 实时风力级数
-                if weather[6] != '':
-                    break
-
-            for i in range(len(text3['od']['od2'])):
-                weather[8] = text3['od']['od2'][i]['od27']  # 相对湿度
-                if weather[8] != '':
-                    break
-
-            for i in range(len(text3['od']['od2'])):
-                weather[7] = text3['od']['od2'][i]['od22']  # 温度
-                if weather[7] != '':
-                    break
+            info3 = re.search('var observe24h_data = (.*?);', text)
+            if info3 != None:
+                gc.collect()  # 内存回收
+                print("获取实时空气质量、风向风力、温湿度" + info3.group(0))
+                text3 = json.loads(info3.group(1))
+                od_data = text3['od']['od2']
+                for i in range(len(od_data)):
+                    weather[4] = od_data[i]['od28']  # 空气质量
+                    weather[5] = od_data[i]['od24']  # 实时风向
+                    weather[6] = od_data[i]['od25']  # 实时风力级数
+                    weather[8] = od_data[i]['od27']  # 相对湿度
+                    weather[7] = od_data[i]['od22']  # 温度
+                c = True
 
             total = total + 1
+            if a and b and c:
+                return None
+            else:
+                raise Exception("没结束")
 
-            return None
-
-        except:
-
+        except Exception as e:
+            print(e)
             print("Can not get weather!", i)
             lost = lost + 1
             gc.collect()  # 内存回收
@@ -272,21 +274,13 @@ def city_get():
     else:  # 获取字库文件并保存
         # 生成城市字模文件
         city_font = {}
-
         for i in range(len(city[0])):
-
             f = open('/data/Fonts/fonts_city.py', 'r')
-
             while True:
-
                 text = f.readline()
-
                 if city[0][i] in text:
-
                     while True:
-
                         text = text + f.readline()
-
                         if ')' in text:
                             a = re.search('[(]' + '(.*?)' + '[)]', text).group(1) \
                                 .replace('\r\n', '') \
@@ -458,6 +452,6 @@ if __name__ == '__main__':
             elif ui_choice == 3:
                 photo_album.UI_Display(datetime)  # 相册主图
 
-        #         print('gc2:',gc.mem_free()) #内存监测
+        # print('gc2:',gc.mem_free()) #内存监测
 
         time.sleep_ms(200)
