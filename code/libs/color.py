@@ -11,7 +11,7 @@ PURPLE = (255, 0, 200)
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 RGB_COLOR = [RED, ORANGE, YELLOW, GREEN, CYAN, BLUE, PURPLE]
-
+DEEPGREEN = (1, 179, 105)
 
 def getRandomColor():
     global RGB_COLOR

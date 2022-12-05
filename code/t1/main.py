@@ -23,7 +23,7 @@ from libs.urllib import urequest
 from ui import default  # 默认经典主题
 from ui import dial  # 极简表盘主题
 from ui import photo_album  # 相册主题
-
+from libs.color import *
 ui_qty = 3  # UI总数量
 ui_choice = 0  # 初始UI标志位
 
@@ -31,15 +31,6 @@ ui_choice = 0  # 初始UI标志位
 # 构建1.5寸LCD对象并初始化
 ########################
 d = global_var.LCD
-
-# 定义常用颜色
-RED = (255, 0, 0)
-GREEN = (0, 255, 0)
-BLUE = (0, 0, 255)
-BLACK = (0, 0, 0)
-WHITE = (255, 255, 255)
-YELLOW = (255, 255, 0)
-DEEPGREEN = (1, 179, 105)
 
 '''
 城市信息:
@@ -58,7 +49,6 @@ rtc = RTC()
 
 # 初始化WIFI指示灯
 WIFI_LED = Pin(2, Pin.OUT)
-
 
 # WIFI连接函数
 def WIFI_Connect():
@@ -157,7 +147,7 @@ def city_get():
         f.close()
 
         city[0] = info['CITY']
-        city[2] = getIdCardCode("广州")
+        city[2] = getIdCardCode(city[0])
 
     # 获取城市名称
     f = open('/data/CityCode.txt', 'r')

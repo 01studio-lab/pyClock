@@ -17,7 +17,7 @@ import network
 import ntptime
 from machine import Pin, RTC
 
-from libs import global_var, ap
+from libs import global_var, ap ,color
 from libs.urllib import urequest
 from ui import daily_epidemic  # 30天疫情主题
 # 导入主题
@@ -32,15 +32,6 @@ ui_choice = 0  # 初始UI标志位
 # 构建1.5寸LCD对象并初始化
 ########################
 d = global_var.LCD
-
-# 定义常用颜色
-RED = (255, 0, 0)
-GREEN = (0, 255, 0)
-BLUE = (0, 0, 255)
-BLACK = (0, 0, 0)
-WHITE = (255, 255, 255)
-YELLOW = (255, 255, 0)
-DEEPGREEN = (1, 179, 105)
 
 '''
 城市信息:
@@ -77,10 +68,10 @@ def WIFI_Connect():
         with open('wifi.txt', 'r') as f:  # 获取账号密码
             info = json.loads(f.read())
             print(info)
-            d.fill(BLACK)
-            d.printStr('Connecting...', 10, 50, RED, size=2)
-            d.printStr(info['SSID'], 10, 110, WHITE, size=2)
-            d.printStr('Press KEY 5s RESET!', 5, 180, BLUE, size=2)
+            d.fill(color.BLACK)
+            d.printStr('Connecting...', 10, 50, color.RED, size=2)
+            d.printStr(info['SSID'], 10, 110, color.WHITE, size=2)
+            d.printStr('Press KEY 5s RESET!', 5, 180, color.BLUE, size=2)
             wlan.connect(info['SSID'], info['PASSWORD'])  # 输入WIFI账号密码
 
             while not wlan.isconnected():
@@ -412,30 +403,30 @@ if __name__ == '__main__':
     feedDog()  # 喂狗
 
     # 获取城市名称和编码
-    d.fill(BLACK)
-    d.printStr('Getting...', 10, 60, RED, size=3)
-    d.printStr('City Data', 10, 120, WHITE, size=3)
+    d.fill(color.BLACK)
+    d.printStr('Getting...', 10, 60, color.RED, size=3)
+    d.printStr('City Data', 10, 120, color.WHITE, size=3)
     city_get()
     feedDog()  # 喂狗
     # 同步网络时钟
-    d.fill(BLACK)
-    d.printStr('Getting...', 10, 60, RED, size=3)
-    d.printStr('Date & Time', 10, 120, WHITE, size=3)
+    d.fill(color.BLACK)
+    d.printStr('Getting...', 10, 60, color.RED, size=3)
+    d.printStr('Date & Time', 10, 120, color.WHITE, size=3)
     ntp_get()
     feedDog()  # 喂狗
 
     # 同步天气信息
-    d.fill(BLACK)
-    d.printStr('Getting...', 10, 60, RED, size=3)
-    d.printStr('Weather Data', 10, 120, WHITE, size=3)
+    d.fill(color.BLACK)
+    d.printStr('Getting...', 10, 60, color.RED, size=3)
+    d.printStr('Weather Data', 10, 120, color.WHITE, size=3)
     weather_get(rtc.datetime())
     feedDog()  # 喂狗
 
     # 获取疫情新增人数信息
-    d.fill(BLACK)
-    d.printStr('Getting...', 10, 60, RED, size=3)
-    d.printStr('Epidemic Situation', 10, 120, WHITE, size=3)
-    d.printStr('Data', 10, 180, WHITE, size=3)
+    d.fill(color.BLACK)
+    d.printStr('Getting...', 10, 60, color.RED, size=3)
+    d.printStr('Epidemic Situation', 10, 120, color.WHITE, size=3)
+    d.printStr('Data', 10, 180, color.WHITE, size=3)
     epidemic_situation_get()
     feedDog()  # 喂狗
 
