@@ -174,7 +174,29 @@ def weather_get(datetime):
                 weather[5] = text3['od']['od2'][i]['od24'] #实时风向
                 if weather[5] != '':
                     break
+                
+            if '风' in weather[5]:#获取的是风向
+                
+                pass
+            
+            else: #获取失败，从另外一个地方获取
+                
+                text2 = json.loads(re.search('var hour3data=' + '(.*?)' + '</script>',text).group(1))
 
+                for i in range(len(text2['1d'])):
+                    
+                    if int(text2['1d'][i].split(',')[0].split('日')[0]) == datetime[2]:#日期相同
+                        
+                        if datetime[4] <= int(text2['1d'][i].split(',')[0].split('日')[1].split('时')[0]): #小时
+
+                            if i == 0 or datetime[4] == int(text2['1d'][i].split(',')[0].split('日')[1].split('时')[0]):
+                    
+                                weather[5] = text2['1d'][i].split(',')[4] #实时风向
+                            else:
+                                
+                                weather[5] = text2['1d'][i-1].split(',')[4] #实时风向
+                            break
+                    
             for i in range(len(text3['od']['od2'])):
                 weather[6] = text3['od']['od2'][i]['od25'] #实时风力级数
                 if weather[6] != '':

@@ -270,7 +270,7 @@ def message_display(weather,datetime):
         elif weather[3] == '扬沙':
             d.Picture(175,5,"/data/picture/default/weather/sand.jpg")
 
-        else:
+        else: #未知天气
             d.Picture(175,5,"/data/picture/default/weather/no.jpg")
 
     #今天天气
@@ -287,9 +287,16 @@ def message_display(weather,datetime):
     #风向
     elif message_num == 2:
         printChinese('       ',5,40,color=WHITE,backcolor=BLACK,size=2) #清除显示残留
-        printChinese(weather[5],30,40,color=WHITE,backcolor=BLACK,size=2)
-        d.printStr(weather[6],110, 40, WHITE, size=2)
-        printChinese('级',125,40,color=WHITE,backcolor=BLACK,size=2)
+        
+        if '无' in weather[5]: #无持续风向
+            
+            printChinese(weather[5],30,40,color=WHITE,backcolor=BLACK,size=2)
+        
+        else: #有风向
+            
+            printChinese(weather[5],30,40,color=WHITE,backcolor=BLACK,size=2)
+            d.printStr(weather[6],110, 40, WHITE, size=2)
+            printChinese('级',125,40,color=WHITE,backcolor=BLACK,size=2)
   
     #最高温度
     elif message_num == 3:
