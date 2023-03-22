@@ -180,7 +180,7 @@ def weather_display(city,weather):
             d.drawRect(115, 5, 50,  24, ZHONGDU, border=1,fillcolor=ZHONGDU)
             printChinese('重度',117,5,color=BLACK,backcolor=ZHONGDU,size=2)
             
-        elif 300 <= int(weather[4]) < 500:#严重
+        elif 300 <= int(weather[4]) <= 500:#严重
             d.drawRect(115, 5, 50,  24, YANZHONG, border=1,fillcolor=YANZHONG)
             printChinese('严重',117,5,color=BLACK,backcolor=YANZHONG,size=2)
     except:
@@ -269,7 +269,10 @@ def message_display(weather,datetime):
             
         elif weather[3] == '扬沙':
             d.Picture(175,5,"/data/picture/default/weather/sand.jpg")
-
+            
+        elif weather[3] == '沙尘暴':
+            d.Picture(175,5,"/data/picture/default/weather/sand.jpg")
+            
         else: #未知天气
             d.Picture(175,5,"/data/picture/default/weather/no.jpg")
 
