@@ -192,7 +192,7 @@ def weather_display(city,weather):
     d.drawRect(44, 185, 48, 10, WHITE, border=2,fillcolor=BLACK)
     d.drawRect(46, 187, 25, 6, RED, border=2,fillcolor=RED)
     d.printStr('   ', 100, 177, BLACK, size=2) #消除重影
-    d.printStr(weather[7], 115-len(weather[7]*5), 177, RED, size=2)
+    d.printStr(str(round(float(weather[7]))), 115-len(str(round(float(weather[7])))*5), 177, RED, size=2) #取整数
     printChinese('℃',135,177,color=WHITE,backcolor=BLACK,size=2)
     
     #实时湿度
@@ -275,6 +275,9 @@ def message_display(weather,datetime):
             
         elif weather[3] == '沙尘暴':
             d.Picture(175,5,"/data/picture/default/weather/sand.jpg")
+            
+        elif weather[3] == '冻雨':
+            d.Picture(175,5,"/data/picture/default/weather/yujiaxue.jpg")
             
         else: #未知天气
             d.Picture(175,5,"/data/picture/default/weather/no.jpg")
