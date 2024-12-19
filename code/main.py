@@ -136,7 +136,7 @@ def weather_get(datetime):
         
         try:
                 
-            myURL = urequest.urlopen("http://www.weather.com.cn/weather1d/"+city[1]+".shtml")
+            myURL = urequest.urlopen("https://www.weather.com.cn/weather1d/"+city[1]+".shtml")
             text = myURL.read(39000+100*i).decode('utf-8') #抓取约前4W个字符，节省内存。
 
             #获取当日天气、高低温
