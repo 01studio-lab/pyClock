@@ -1,12 +1,14 @@
 '''
 实验名称：pyClock天气时钟-出厂例程
-版本：v1.0
-日期：2022.5
+版本：v2.5.0
+日期：2025.6
 作者：01Studio
 '''
+#版本信息
+version = '2.5.0'
 
 #导入相关模块
-import network,time,re,json,os,machine
+import network,time,re,json,os,machine,usocket
 from machine import Pin,RTC,WDT
 from libs.urllib import urequest
 from libs import global_var,ap
@@ -33,6 +35,10 @@ BLACK = (0,0,0)
 WHITE = (255,255,255)
 YELLOW = (255,255,0)
 DEEPGREEN = (1,179,105)
+
+#获取Chip_ID(即MAC地址)，并转换为十六进制字符串格式
+chip_id_str = ':'.join([f"{b:02x}" for b in machine.unique_id()])
+print('chip id: ', chip_id_str)
 
 '''
 城市信息:
@@ -122,108 +128,73 @@ def ntp_get():
             print("Can not get time!")
         
         time.sleep_ms(500)
-
-#记录天气爬虫次数，用于调试
-total = 0
-lost = 0 
-
-#网页获取天气数据
-def weather_get(datetime):
+        
+def weather_get():
     
-    global weather,lost,total,city    
+    global weather,city,mac_str,version
+    
+    
+    #发送给服务器数据
+    send_info = {
+        'city':city[0],    
+        'citycode': city[1],
+        'product':'pyClock',
+        'chip_id':chip_id_str,
+        'version':version
+        }    
 
-    for i in range(5):#失败会重试，最多5次
+    send_info_str = json.dumps(send_info) #转成json字符串
+    
+    for i in range(3): #尝试3次
         
         try:
-                
-            myURL = urequest.urlopen("https://www.weather.com.cn/weather1d/"+city[1]+".shtml")
-            text = myURL.read(39000+100*i).decode('utf-8') #抓取约前4W个字符，节省内存。
-
-            #获取当日天气、高低温
-            text1=re.search('id="hidden_title" value="' + '(.*?)' + '°C',text).group(1)
-            weather[0] = text1.split()[2] #当日天气
-            weather[1] = str(min(list(map(int,text1.split()[3].split('/'))))) #当天最低温
-            weather[2] = str(max(list(map(int,text1.split()[3].split('/'))))) #当天最高温
+            # 创建socket对象
+            s=usocket.socket()
             
-            #获取实时天气
-            text2 = json.loads(re.search('var hour3data=' + '(.*?)' + '</script>',text).group(1))
-
-            for i in range(len(text2['1d'])):
-                
-                if int(text2['1d'][i].split(',')[0].split('日')[0]) == datetime[2]:#日期相同
-                    
-                    if datetime[4] <= int(text2['1d'][i].split(',')[0].split('日')[1].split('时')[0]): #小时
-
-                        if i == 0 or datetime[4] == int(text2['1d'][i].split(',')[0].split('日')[1].split('时')[0]):
-                
-                            weather[3] = text2['1d'][i].split(',')[2] #实时天气
-                        else:
-                            
-                            weather[3] = text2['1d'][i-1].split(',')[2] #实时天气
-                        break
-
-            #获取实时空气质量、风向风力、温湿度
-            text3 = json.loads(re.search('var observe24h_data = ' + '(.*?)' + ';',text).group(1))
-
-            for i in range(len(text3['od']['od2'])):
-                weather[4] = text3['od']['od2'][i]['od28'] #空气质量
-                if weather[4] != '':
-                    break
-                
-            for i in range(len(text3['od']['od2'])):
-                weather[5] = text3['od']['od2'][i]['od24'] #实时风向
-                if weather[5] != '':
-                    break
-                
-            if '风' in weather[5]:#获取的是风向
-                
+            # 连接服务器
+            addr_info = usocket.getaddrinfo('weather.01studio.cc', 10241)
+            addr = addr_info[0][-1]
+            
+            s.connect(addr)
+            
+            # 设置接收超时时间为30秒
+            s.settimeout(20.0)
+            
+            # 发送数据
+            s.send(send_info_str)
+        
+            #等待接收，等待时间20秒
+            data = s.recv(256)
+            print('Got message:', data.decode('utf-8'))
+            
+            rev_data = json.loads(data.decode('utf-8'))       
+            
+            weather = [
+                        rev_data['当日天气'],
+                        rev_data['当日最低温'],
+                        rev_data['当日最高温'],
+                        rev_data['实时天气'],
+                        rev_data['实时空气质量'],
+                        rev_data['实时风向'],
+                        rev_data['实时风力级数'],
+                        rev_data['实时温度'],
+                        rev_data['实时湿度'],
+                    ]              
+            
+            # 关闭socket连接
+            s.close()
+            
+            return True
+            
+        except Exception as e:
+            print('获取天气信息失败:', e)
+            try:
+                s.close()
+            except:
                 pass
-            
-            else: #获取失败，从另外一个地方获取
-                
-                text2 = json.loads(re.search('var hour3data=' + '(.*?)' + '</script>',text).group(1))
-
-                for i in range(len(text2['1d'])):
-                    
-                    if int(text2['1d'][i].split(',')[0].split('日')[0]) == datetime[2]:#日期相同
-                        
-                        if datetime[4] <= int(text2['1d'][i].split(',')[0].split('日')[1].split('时')[0]): #小时
-
-                            if i == 0 or datetime[4] == int(text2['1d'][i].split(',')[0].split('日')[1].split('时')[0]):
-                    
-                                weather[5] = text2['1d'][i].split(',')[4] #实时风向
-                            else:
-                                
-                                weather[5] = text2['1d'][i-1].split(',')[4] #实时风向
-                            break
-                    
-            for i in range(len(text3['od']['od2'])):
-                weather[6] = text3['od']['od2'][i]['od25'] #实时风力级数
-                if weather[6] != '':
-                    break
-
-            for i in range(len(text3['od']['od2'])):
-                weather[8] = text3['od']['od2'][i]['od27'] #相对湿度
-                if weather[8] != '':
-                    break
-
-            for i in range(len(text3['od']['od2'])):
-                weather[7] = text3['od']['od2'][i]['od22'] #温度
-                if weather[7] != '':
-                    break 
-            
-            total = total+1
-            
-            return None
-            
-        except:
-           
-            print("Can not get weather!",i)
-            lost = lost + 1
-            gc.collect() #内存回收
-            
-        time.sleep_ms(1000)
-
+        
+        time.sleep(1)
+        
 #信息打印
 def info_print():
     
@@ -243,8 +214,9 @@ def info_print():
     print('实时温度:',weather[7])
     print('实时湿度:',weather[8])
     
-    print('total:',total)
-    print('lost:',lost)
+    #print('total:',total)
+    #print('lost:',lost)
+
 
 #获取城市信息
 def city_get():
@@ -421,27 +393,20 @@ ntp_get()
 d.fill(BLACK)
 d.printStr('Getting...', 10, 60, RED, size=3)
 d.printStr('Weather Data', 10, 120, WHITE, size=3)
-weather_get(rtc.datetime())
+weather_get()
 
 #信息打印
 info_print()
 
 tick = 61 #每秒刷新标志位
 
+second_count = 0 #计数
+
 while True:
     
     #获取时间
     datetime = rtc.datetime()
-    
-    #30分钟在线获取一次天气信息,顺便检测wifi是否掉线
-    if datetime[5]%30 == 0 and datetime[6] == 0:
-        
-        WIFI_Connect() #检查WiFi，掉线的话自动重连
-        
-        weather_get(datetime) #获取天气信息
-        
-        info_print() #打印相关信息
-    
+
     #每秒刷新一次UI
     if tick != datetime[6]:
         
@@ -458,6 +423,19 @@ while True:
         elif ui_choice == 2 :
             photo_album.UI_Display(datetime) #相册主图
                    
-#         print('gc2:',gc.mem_free()) #内存监测        
+#         print('gc2:',gc.mem_free()) #内存监测
+
+        second_count = second_count + 1
+        
+        #30分钟在线获取一次天气信息,顺便检测wifi是否掉线
+        if second_count > 1800:
+            
+            WIFI_Connect() #检查WiFi，掉线的话自动重连
+        
+            weather_get() #获取天气信息
+        
+            info_print() #打印相关信息
+            
+            second_count = 0
         
     time.sleep_ms(200) 
